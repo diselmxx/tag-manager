@@ -1,0 +1,42 @@
+{
+  "type": "component",
+  "metadata": {},
+  "schema": {
+    "name": "tag-manager",
+    "friendlyName": "tag-manager",
+    "description": "An amazing Budibase component!",
+    "icon": "Text",
+    "settings": [
+      {
+        "type": "table",
+        "label": "Users Table",
+        "key": "users"
+      },
+      {
+        "type": "field",
+        "label": "User Tags Order Column",
+        "key": "userTagsOrderColumn"
+      },
+      {
+        "type": "field",
+        "label": "User Highlighted Tags Order Column",
+        "key": "userHighlightedTagsOrderColumn"
+      },
+      {
+        "type": "table",
+        "label": "All tags Table",
+        "key": "allTags"
+      },
+      {
+        "type": "dataSource",
+        "label": "All User Tags",
+        "key": "allUserTags"
+      },
+      {
+        "type": "text",
+        "label": "User Row Id",
+        "key": "userRowId"
+      }
+    ]
+  }
+}
