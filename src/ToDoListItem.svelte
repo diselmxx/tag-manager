@@ -1,8 +1,11 @@
 <script>
   import { tagsColors, mapOrder } from "./utils.js";
-//   import { allUserItems, activeItems, allUserItemsIds } from "./store.js";
+  //   import { allUserItems, activeItems, allUserItemsIds } from "./store.js";
 
   export let item;
+  export let items;
+  export let saveTags;
+  export let column;
 
   let editable = false;
   let newColor = "#c2f5e9";
@@ -19,18 +22,11 @@
   }
 
   function onColorChange() {
-    // if ($allUserItems.filter((val) => val._id === item._id).length) {
-    //   allUserItems.update((userItems) => {
-
-    //     const newArr = userItems.map((userItem) => {
-    //       return userItem._id === item._id
-    //         ? { ...userItem, color: newColor }
-    //         : userItem;
-    //     });
-    //     return mapOrder(newArr, $allUserItemsIds, "_id")
-    //   });
-    //   saveTagsOrderInUserRow(mapOrder($allUserItems, $allUserItemsIds, "_id"));
-    // }
+    items = items.map((tag) => {
+      tag._id === item._id ? (tag.color = newColor) : tag;
+      return tag;
+    });
+    saveTags(items, column);
     hideInput();
   }
 </script>
@@ -38,7 +34,6 @@
 <div
   class="item"
   style="background-color: {item.color}"
-  data-id={item._id}
   on:dblclick={() => showInput()}
 >
   {item.name}

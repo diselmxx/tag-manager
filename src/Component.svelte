@@ -21,67 +21,43 @@
   let items = [];
   let items2 = [];
 
-  const sortableOptions1 = {
-    group: {
-      name: "items",
-      pull: "clone",
-      put: false,
-    },
+  const sortableOptions = {
+    group: "items",
     animation: 300,
     easing: "cubic-bezier(1, 0, 0, 1)",
-    onAdd: function (evt) {
-      items = items;
-    },
-    onRemove: function (evt) {
-      items = items;
-    },
-    onEnd: function (evt) {
-      items = items;
-    },
-  };
-
-  const sortableOptions2 = {
-    group: {
-      name: "items",
-    },
-    animation: 300,
-    easing: "cubic-bezier(1, 0, 0, 1)",
-    onAdd: function (evt) {
-      items2 = items2;
-    },
-    onRemove: function (evt) {
-      items2 = items2;
-    },
-    onEnd: function (evt) {
-      items2 = items2;
-    },
   };
 
   onMount(async () => {
     userRow = await fetchUserRow();
+    const userTagsParse = JSON.parse(userRow[userTagsOrderColumn]);
+    const userHighlightedTagsParse = JSON.parse(
+      userRow[userHighlightedTagsOrderColumn]
+    );
+
+    const allUserTagsValue = setColors(allUserTags.value, userTagsParse, userHighlightedTagsParse);
+
 
     allTagsOrder =
-      (userRow[userTagsOrderColumn] &&
-        JSON.parse(userRow[userTagsOrderColumn]).map(
-          (item) => item && item._id
-        )) ||
+      (userTagsParse.length && userTagsParse.map((item) => item && item._id)) ||
       [];
 
     highlightedTagsOrder =
-      (userRow[userHighlightedTagsOrderColumn] &&
-        JSON.parse(userRow[userHighlightedTagsOrderColumn]).map(
-          (item) => item && item._id
-        )) ||
+      (userHighlightedTagsParse.length &&
+        userHighlightedTagsParse.map((item) => item && item._id)) ||
       [];
 
     if (allTagsOrder.length) {
-      items = mapOrder(allUserTags.value, allTagsOrder, "_id");
+      const allTags = allUserTagsValue.filter((item) =>
+        allTagsOrder.includes(item._id)
+      );
+      items = mapOrder(allTags, allTagsOrder, "_id");
     }
 
     if (highlightedTagsOrder.length) {
-      const highlightedTags = allUserTags.value.filter((item) =>
+      const highlightedTags = allUserTagsValue.filter((item) =>
         highlightedTagsOrder.includes(item._id)
       );
+      console.log(highlightedTags);
       items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
     }
   });
@@ -106,10 +82,13 @@
   };
 
   const saveTags = async (tags, column) => {
+    const tagsMinify = tags.map((tag) => {
+      return { _id: tag._id, color: tag.color };
+    });
     try {
       const userRow = await fetchUserRow();
       return await API.saveRow({
-        ...{ ...userRow, [column]: JSON.stringify(tags) },
+        ...{ ...userRow, [column]: JSON.stringify(tagsMinify) },
         ...users,
       });
     } catch (e) {
@@ -124,8 +103,16 @@
     console.log("New tag created ans saved", newTag);
   }
 
-  const removeItem = async (id) => {
+  function setColors(allValues, list1, list2) {
+    const commonList = [...list1 ,...list2]
+    return allValues.map((item) => {
+        return item = {...item, color: commonList.find(i => i._id === item._id).color || "#c2f5e9"}
+    });
+  }
+
+  const removeItem = async (column, list, id) => {
     const tagRow = await fetchTagRow(id);
+    console.log(tagRow);
     const tagFriends =
       tagRow.friends.filter((item) => item._id !== userRowId) || [];
 
@@ -133,22 +120,23 @@
       ...{ ...tagRow, friends: tagFriends },
       ...allTags,
     });
-    const newItems = items.filter((item) => item._id !== id);
-    saveTags(newItems, userTagsOrderColumn);
-    items = newItems;
+    const newItems = list.filter((item) => item._id !== id);
+    saveTags(newItems, column);
+    items = items.filter((item) => item._id !== id);
+    items2 = items2.filter((item) => item._id !== id);
   };
 
   function itemOrderChanged(event, column, timeout) {
     console.log(`item order changed in ${column}`, event.detail);
     setTimeout(() => {
       saveTags(event.detail, column);
+      console.log(`save ${column}`);
     }, timeout);
   }
 
   function getItemById(id) {
     return items.concat(items2).find((item) => item._id == id);
   }
-
 </script>
 
 <td colspan="2" use:styleable={$component.styles}>
@@ -157,14 +145,20 @@
     <SortableList
       ulClass="basket"
       liClass="basket-item"
-      sortableOptions={sortableOptions1}
+      {sortableOptions}
       on:orderChanged={(e) => itemOrderChanged(e, userTagsOrderColumn, 0)}
-      {items}
+      bind:items
       idKey="_id"
       let:item
       {getItemById}
     >
-      <ToDoListItem {item} on:click={() => removeItem(item._id)} />
+      <ToDoListItem
+        {item}
+        bind:items
+        {saveTags}
+        column={userTagsOrderColumn}
+        on:click={() => removeItem(userTagsOrderColumn, items, item._id)}
+      />
     </SortableList>
     <ToDoInputForm {allTags} {addItem} {userRowId} />
   </div>
@@ -174,15 +168,22 @@
     <SortableList
       ulClass="basket"
       liClass="basket-item"
-      sortableOptions={sortableOptions2}
-      items={items2}
+      {sortableOptions}
+      bind:items={items2}
       on:orderChanged={(e) =>
         itemOrderChanged(e, userHighlightedTagsOrderColumn, 500)}
       idKey="_id"
       let:item
       {getItemById}
     >
-      <ToDoListItem {item} on:click={() => removeItem(item._id)} />
+      <ToDoListItem
+        {item}
+        bind:items={items2}
+        {saveTags}
+        column={userHighlightedTagsOrderColumn}
+        on:click={() =>
+          removeItem(userHighlightedTagsOrderColumn, items2, item._id)}
+      />
     </SortableList>
   </div>
 </td>
