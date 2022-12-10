@@ -53,7 +53,7 @@
       /></svg
     ></button
   >
-  {#if editable}
+  <!-- {#if editable}
     <input
       bind:value={newColor}
       on:blur={() => hideInput()}
@@ -68,7 +68,7 @@
         <option value={color} />
       {/each}
     </datalist>
-  {/if}
+  {/if} -->
 </div>
 
 <style>

@@ -10,56 +10,26 @@
   export let allUserTags;
   export let userRowId;
   export let userTagsOrderColumn;
-  export let userHighlightedTagsOrderColumn;
 
   const { API, styleable, notificationStore } = getContext("sdk");
   const component = getContext("component");
 
   let userRow;
   let allTagsOrder = [];
-  let highlightedTagsOrder = [];
   let items = [];
-  let items2 = [];
 
-  const sortableOptions1 = {
-    group: {
-      name: "items",
-      pull: "clone",
-      put: false,
-    },
-    animation: 300,
-    easing: "cubic-bezier(1, 0, 0, 1)",
-    onAdd: function (evt) {
-      items = items;
-    },
-    onRemove: function (evt) {
-      items = items;
-    },
-    onEnd: function (evt) {
-      items = items;
-    },
-  };
-
-  const sortableOptions2 = {
+  const sortableOptions = {
     group: {
       name: "items",
     },
     animation: 300,
     easing: "cubic-bezier(1, 0, 0, 1)",
-    onAdd: function (evt) {
-      items2 = items2;
-    },
-    onRemove: function (evt) {
-      items2 = items2;
-    },
-    onEnd: function (evt) {
-      items2 = items2;
-    },
   };
 
   onMount(async () => {
     userRow = await fetchUserRow();
 
+    //Get tags order
     allTagsOrder =
       (userRow[userTagsOrderColumn] &&
         JSON.parse(userRow[userTagsOrderColumn]).map(
@@ -67,32 +37,14 @@
         )) ||
       [];
 
-    highlightedTagsOrder =
-      (userRow[userHighlightedTagsOrderColumn] &&
-        JSON.parse(userRow[userHighlightedTagsOrderColumn]).map(
-          (item) => item && item._id
-        )) ||
-      [];
-
+    //Sort tags by order
     if (allTagsOrder.length) {
       items = mapOrder(allUserTags.value, allTagsOrder, "_id");
-    }
-
-    if (highlightedTagsOrder.length) {
-      const highlightedTags = allUserTags.value.filter((item) =>
-        highlightedTagsOrder.includes(item._id)
-      );
-      items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
     }
   });
 
   const fetchUserRow = async () => {
-    if (
-      !users?.tableId ||
-      !userRowId ||
-      !userTagsOrderColumn ||
-      !userHighlightedTagsOrderColumn
-    ) {
+    if (!users?.tableId || !userRowId || !userTagsOrderColumn) {
       return null;
     }
     return await API.fetchRow({ rowId: userRowId, tableId: users.tableId });
@@ -138,17 +90,13 @@
     items = newItems;
   };
 
-  function itemOrderChanged(event, column, timeout) {
-    console.log(`item order changed in ${column}`, event.detail);
-    setTimeout(() => {
-      saveTags(event.detail, column);
-    }, timeout);
+  function itemOrderChanged(event, column) {
+    saveTags(event.detail, column);
   }
 
   function getItemById(id) {
-    return items.concat(items2).find((item) => item._id == id);
+    return items.find((item) => item._id == id);
   }
-
 </script>
 
 <td colspan="2" use:styleable={$component.styles}>
@@ -157,9 +105,9 @@
     <SortableList
       ulClass="basket"
       liClass="basket-item"
-      sortableOptions={sortableOptions1}
-      on:orderChanged={(e) => itemOrderChanged(e, userTagsOrderColumn, 0)}
-      {items}
+      {sortableOptions}
+      on:orderChanged={(e) => itemOrderChanged(e, userTagsOrderColumn)}
+      bind:items
       idKey="_id"
       let:item
       {getItemById}
@@ -167,23 +115,6 @@
       <ToDoListItem {item} on:click={() => removeItem(item._id)} />
     </SortableList>
     <ToDoInputForm {allTags} {addItem} {userRowId} />
-  </div>
-
-  <h3 class="title">Highlighted tags</h3>
-  <div class="basket-wrappper">
-    <SortableList
-      ulClass="basket"
-      liClass="basket-item"
-      sortableOptions={sortableOptions2}
-      items={items2}
-      on:orderChanged={(e) =>
-        itemOrderChanged(e, userHighlightedTagsOrderColumn, 500)}
-      idKey="_id"
-      let:item
-      {getItemById}
-    >
-      <ToDoListItem {item} on:click={() => removeItem(item._id)} />
-    </SortableList>
   </div>
 </td>
 
@@ -229,5 +160,8 @@
   }
   :global(ul) {
     padding: 0;
+  }
+  :global(button) {
+    cursor: pointer;
   }
 </style>
