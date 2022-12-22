@@ -58,10 +58,13 @@
   };
 
   const saveTags = async (tags, column) => {
+    const tagsMinify = tags.map((tag) => {
+      return { _id: tag._id, color: tag.color };
+    });
     try {
       const userRow = await fetchUserRow();
       return await API.saveRow({
-        ...{ ...userRow, [column]: JSON.stringify(tags) },
+        ...{ ...userRow, [column]: JSON.stringify(tagsMinify) },
         ...users,
       });
     } catch (e) {
