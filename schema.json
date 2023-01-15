@@ -36,6 +36,16 @@
         "type": "text",
         "label": "User Row Id",
         "key": "userRowId"
+      },
+      {
+        "type": "text",
+        "label": "Title for first field",
+        "key": "titleForAllTags"
+      },
+      {
+        "type": "text",
+        "label": "Title for second field",
+        "key": "titleForHighlightedTags"
       }
     ]
   }

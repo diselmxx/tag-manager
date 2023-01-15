@@ -11,6 +11,8 @@
   export let userRowId;
   export let userTagsOrderColumn;
   export let userHighlightedTagsOrderColumn;
+  export let titleForAllTags;
+  export let titleForHighlightedTags;
 
   const { API, styleable, notificationStore } = getContext("sdk");
   const component = getContext("component");
@@ -128,7 +130,9 @@
 </script>
 
 <td colspan="2" use:styleable={$component.styles}>
-  <h3 class="title">All user tags</h3>
+  {#if titleForAllTags}
+    <h3 class="title">{titleForAllTags}</h3>
+  {/if}
   <div class="basket-wrappper">
     <SortableList
       ulClass="basket"
@@ -153,7 +157,9 @@
     <NewTagInput {allTags} {addItem} {userRowId} />
   </div>
 
-  <h3 class="title">Highlighted tags</h3>
+  {#if titleForHighlightedTags}
+    <h3 class="title">{titleForHighlightedTags}</h3>
+  {/if}
   <div class="basket-wrappper">
     <SortableList
       ulClass="basket"
