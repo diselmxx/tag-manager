@@ -2,8 +2,8 @@
   import { onMount, getContext } from "svelte";
   import { mapOrder } from "./utils.js";
   import SortableList from "@palsch/svelte-sortablejs";
-  import ToDoListItem from "./ToDoListItem.svelte";
-  import ToDoInputForm from "./TodoInputForm.svelte";
+  import Tag from "./Tag.svelte";
+  import NewTagInput from "./NewTagInput.svelte";
 
   export let users;
   export let allTags;
@@ -140,15 +140,17 @@
       let:item
       {getItemById}
     >
-      <ToDoListItem
+      <Tag
         {item}
         bind:items
         {saveTags}
         {fetchTagRow}
+        {userRowId}
+        {allTags}
         column={userTagsOrderColumn}
       />
     </SortableList>
-    <ToDoInputForm {allTags} {addItem} {userRowId} />
+    <NewTagInput {allTags} {addItem} {userRowId} />
   </div>
 
   <h3 class="title">Highlighted tags</h3>
@@ -164,11 +166,13 @@
       let:item
       {getItemById}
     >
-      <ToDoListItem
+      <Tag
         {item}
         bind:items={items2}
         {saveTags}
         {fetchTagRow}
+        {userRowId}
+        {allTags}
         column={userHighlightedTagsOrderColumn}
       />
     </SortableList>
