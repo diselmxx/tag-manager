@@ -1,9 +1,11 @@
 <script>
-  import { getContext } from "svelte";
+  import { onMount, getContext } from "svelte";
+  import SearchList from "./SearchList.svelte";
 
   export let allTags;
   export let addItem;
   export let userRowId;
+  export let fetchAllTags;
 
   const { API, notificationStore } = getContext("sdk");
 
@@ -11,6 +13,14 @@
   let newColor = "#c2f5e9";
   let newItemInputForm = null;
   let inputOpen = false;
+  let fetchedAllTags = [];
+
+  $: searchItems = fetchedAllTags.filter((tag) => tag.name.includes(newItem));
+
+  onMount(async () => {
+    fetchedAllTags = await fetchAllTags();
+    console.log(fetchedAllTags);
+  });
 
   async function createTag() {
     try {
@@ -19,13 +29,14 @@
         ...{
           name: newItem,
           color: newColor,
-          friends: [{_id: userRowId}]
+          friends: [{ _id: userRowId }],
         },
       });
     } catch (e) {
       notificationStore.actions.error("Failed to create tags");
     }
   }
+
   async function addToList() {
     if (newItem) {
       const newTag = await createTag();
@@ -41,6 +52,10 @@
 
   function hideInput() {
     inputOpen = false;
+  }
+
+  function setValue(value) {
+    newItem = value;
   }
 </script>
 
@@ -71,18 +86,21 @@
   {/if}
   {#if inputOpen}
     <div class="tags-input-wrapper">
-      <input
-        bind:value={newItem}
-        bind:this={newItemInputForm}
-        on:blur={() => newItem || hideInput()}
-        on:keydown={(e) => {
-          e.key === "Enter" ? addToList() : "";
-          e.key === "Escape" ? hideInput() : "";
-        }}
-        type="text"
-        placeholder="Add a new tag"
-        class="tags-input"
-      />
+      <div style="position:relative;">
+        <input
+          bind:value={newItem}
+          bind:this={newItemInputForm}
+          on:blur={() => newItem || hideInput()}
+          on:keydown={(e) => {
+            e.key === "Enter" ? addToList() : "";
+            e.key === "Escape" ? hideInput() : "";
+          }}
+          type="text"
+          placeholder="Add a new tag"
+          class="tags-input"
+        />
+        <SearchList bind:items={searchItems} {setValue} isVisible={newItem} />
+      </div>
       {#if newItem}
         <button class="add-tag-button2" on:click={addToList}>Add</button>
       {/if}
@@ -97,7 +115,7 @@
     justify-content: center;
   }
   .tags-input {
-    width: 130px;
+    width: 250px;
     height: 25px;
     font-size: 14px;
     padding: 0 4px;

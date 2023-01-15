@@ -6,6 +6,7 @@
   import ToDoInputForm from "./TodoInputForm.svelte";
 
   export let users;
+  export let searchField;
   export let allTags;
   export let allUserTags;
   export let userRowId;
@@ -28,14 +29,18 @@
   };
 
   onMount(async () => {
+    console.log(API);
     userRow = await fetchUserRow();
     const userTagsParse = JSON.parse(userRow[userTagsOrderColumn]);
     const userHighlightedTagsParse = JSON.parse(
       userRow[userHighlightedTagsOrderColumn]
     );
 
-    const allUserTagsValue = setColors(allUserTags.value, userTagsParse, userHighlightedTagsParse);
-
+    const allUserTagsValue = setColors(
+      allUserTags.value,
+      userTagsParse,
+      userHighlightedTagsParse
+    );
 
     allTagsOrder =
       (userTagsParse.length && userTagsParse.map((item) => item && item._id)) ||
@@ -57,10 +62,13 @@
       const highlightedTags = allUserTagsValue.filter((item) =>
         highlightedTagsOrder.includes(item._id)
       );
-      console.log(highlightedTags);
       items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
     }
   });
+
+  const fetchAllTags = async () => {
+    return await API.fetchTableData(allTags.tableId);
+  };
 
   const fetchUserRow = async () => {
     if (
@@ -104,9 +112,12 @@
   }
 
   function setColors(allValues, list1, list2) {
-    const commonList = [...list1 ,...list2]
+    const commonList = [...list1, ...list2];
     return allValues.map((item) => {
-        return item = {...item, color: commonList.find(i => i._id === item._id).color || "#c2f5e9"}
+      return (item = {
+        ...item,
+        color: commonList.find((i) => i._id === item._id)?.color || "#c2f5e9",
+      });
     });
   }
 
@@ -160,7 +171,7 @@
         on:click={() => removeItem(userTagsOrderColumn, items, item._id)}
       />
     </SortableList>
-    <ToDoInputForm {allTags} {addItem} {userRowId} />
+    <ToDoInputForm {allTags} {fetchAllTags} {addItem} {userRowId} />
   </div>
 
   <h3 class="title">Highlighted tags</h3>

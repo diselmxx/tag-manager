@@ -13,6 +13,11 @@
         "key": "users"
       },
       {
+        "type": "dataSource",
+        "label": "Search Field",
+        "key": "searchField"
+      },
+      {
         "type": "field",
         "label": "User Tags Order Column",
         "key": "userTagsOrderColumn"
@@ -29,7 +34,7 @@
       },
       {
         "type": "dataSource",
-        "label": "All User Tags",
+        "label": "All User Tags (provider rows)",
         "key": "allUserTags"
       },
       {
