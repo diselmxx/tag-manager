@@ -60,7 +60,6 @@
       const highlightedTags = allUserTagsValue.filter((item) =>
         highlightedTagsOrder.includes(item._id)
       );
-      console.log(highlightedTags);
       items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
     }
   });
@@ -91,7 +90,7 @@
     try {
       const userRow = await fetchUserRow();
       notificationStore.actions.success("Saved...");
-      notificationStore.actions.blockNotifications(1000);
+      notificationStore.actions.blockNotifications(2000);
       return await API.saveRow({
         ...{ ...userRow, [column]: JSON.stringify(tagsMinify) },
         ...users,
@@ -105,7 +104,6 @@
     items.push(newTag);
     saveTags([...items, newTag], userTagsOrderColumn);
     items = items;
-    console.log("New tag created ans saved", newTag);
   }
 
   function setColors(allValues, list1, list2) {
@@ -118,26 +116,9 @@
     });
   }
 
-  const removeItem = async (column, list, id) => {
-    const tagRow = await fetchTagRow(id);
-    const tagFriends =
-      tagRow.friends.filter((item) => item._id !== userRowId) || [];
-
-    await API.saveRow({
-      ...{ ...tagRow, friends: tagFriends },
-      ...allTags,
-    });
-    const newItems = list.filter((item) => item._id !== id);
-    saveTags(newItems, column);
-    items = items.filter((item) => item._id !== id);
-    items2 = items2.filter((item) => item._id !== id);
-  };
-
   function itemOrderChanged(event, column, timeout) {
-    console.log(`item order changed in ${column}`, event.detail);
     setTimeout(() => {
       saveTags(event.detail, column);
-      console.log(`save ${column}`);
     }, timeout);
   }
 
@@ -163,8 +144,8 @@
         {item}
         bind:items
         {saveTags}
+        {fetchTagRow}
         column={userTagsOrderColumn}
-        on:click={() => removeItem(userTagsOrderColumn, items, item._id)}
       />
     </SortableList>
     <ToDoInputForm {allTags} {addItem} {userRowId} />
@@ -187,9 +168,8 @@
         {item}
         bind:items={items2}
         {saveTags}
+        {fetchTagRow}
         column={userHighlightedTagsOrderColumn}
-        on:click={() =>
-          removeItem(userHighlightedTagsOrderColumn, items2, item._id)}
       />
     </SortableList>
   </div>
