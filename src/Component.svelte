@@ -34,8 +34,11 @@
       userRow[userHighlightedTagsOrderColumn]
     );
 
-    const allUserTagsValue = setColors(allUserTags.value, userTagsParse, userHighlightedTagsParse);
-
+    const allUserTagsValue = setColors(
+      allUserTags.value,
+      userTagsParse,
+      userHighlightedTagsParse
+    );
 
     allTagsOrder =
       (userTagsParse.length && userTagsParse.map((item) => item && item._id)) ||
@@ -87,6 +90,8 @@
     });
     try {
       const userRow = await fetchUserRow();
+      notificationStore.actions.success("Saved...");
+      notificationStore.actions.blockNotifications(1000);
       return await API.saveRow({
         ...{ ...userRow, [column]: JSON.stringify(tagsMinify) },
         ...users,
@@ -104,15 +109,17 @@
   }
 
   function setColors(allValues, list1, list2) {
-    const commonList = [...list1 ,...list2]
+    const commonList = [...list1, ...list2];
     return allValues.map((item) => {
-        return item = {...item, color: commonList.find(i => i._id === item._id).color || "#c2f5e9"}
+      return (item = {
+        ...item,
+        color: commonList.find((i) => i._id === item._id)?.color || "#c2f5e9",
+      });
     });
   }
 
   const removeItem = async (column, list, id) => {
     const tagRow = await fetchTagRow(id);
-    console.log(tagRow);
     const tagFriends =
       tagRow.friends.filter((item) => item._id !== userRowId) || [];
 
