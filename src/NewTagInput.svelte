@@ -17,9 +17,10 @@
       return await API.saveRow({
         ...allTags,
         ...{
+          //(name,color,friends now are hardcoded(columns name))
           name: newItem,
           color: newColor,
-          friends: [{_id: userRowId}]
+          friends: [{ _id: userRowId }],
         },
       });
     } catch (e) {

@@ -32,7 +32,7 @@
 
   onMount(async () => {
     userRow = await fetchUserRow();
-    const firstFieldTagsParse = JSON.parse(userRow[firstFieldTagsColumn]);
+    const firstFieldTagsParse = JSON.parse(userRow[firstFieldTagsColumn]) || [];
     const secondFieldTagsParse =
       JSON.parse(userRow[secondFieldTagsColumn]) || [];
 
