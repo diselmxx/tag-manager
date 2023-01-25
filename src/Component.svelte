@@ -9,18 +9,19 @@
   export let allTags;
   export let allUserTags;
   export let userRowId;
-  export let userTagsOrderColumn;
-  export let userHighlightedTagsOrderColumn;
-  export let titleForAllTags;
-  export let titleForHighlightedTags;
+  export let firstFieldTagsColumn;
+  export let firstFieldTitle;
+  export let secondField;
+  export let secondFieldTitle;
+  export let secondFieldTagsColumn;
 
   const { API, styleable, notificationStore } = getContext("sdk");
   const component = getContext("component");
 
   let userRow;
-  let allTagsOrder = [];
-  let highlightedTagsOrder = [];
+  let firstFieldTagsOrder = [];
   let items = [];
+  let secondFieldTagsOrder = [];
   let items2 = [];
 
   const sortableOptions = {
@@ -31,38 +32,38 @@
 
   onMount(async () => {
     userRow = await fetchUserRow();
-    const userTagsParse = JSON.parse(userRow[userTagsOrderColumn]);
-    const userHighlightedTagsParse = JSON.parse(
-      userRow[userHighlightedTagsOrderColumn]
-    );
+    const firstFieldTagsParse = JSON.parse(userRow[firstFieldTagsColumn]);
+    const secondFieldTagsParse =
+      JSON.parse(userRow[secondFieldTagsColumn]) || [];
 
     const allUserTagsValue = setColors(
       allUserTags.value,
-      userTagsParse,
-      userHighlightedTagsParse
+      firstFieldTagsParse,
+      secondFieldTagsParse
     );
 
-    allTagsOrder =
-      (userTagsParse.length && userTagsParse.map((item) => item && item._id)) ||
+    firstFieldTagsOrder =
+      (firstFieldTagsParse.length &&
+        firstFieldTagsParse.map((item) => item && item._id)) ||
       [];
 
-    highlightedTagsOrder =
-      (userHighlightedTagsParse.length &&
-        userHighlightedTagsParse.map((item) => item && item._id)) ||
+    secondFieldTagsOrder =
+      (secondFieldTagsParse.length &&
+        secondFieldTagsParse.map((item) => item && item._id)) ||
       [];
 
-    if (allTagsOrder.length) {
-      const allTags = allUserTagsValue.filter((item) =>
-        allTagsOrder.includes(item._id)
+    if (firstFieldTagsOrder.length) {
+      const firstFieldTags = allUserTagsValue.filter((item) =>
+        firstFieldTagsOrder.includes(item._id)
       );
-      items = mapOrder(allTags, allTagsOrder, "_id");
+      items = mapOrder(firstFieldTags, firstFieldTagsOrder, "_id");
     }
 
-    if (highlightedTagsOrder.length) {
-      const highlightedTags = allUserTagsValue.filter((item) =>
-        highlightedTagsOrder.includes(item._id)
+    if (secondFieldTagsOrder.length) {
+      const secondFieldTags = allUserTagsValue.filter((item) =>
+        secondFieldTagsOrder.includes(item._id)
       );
-      items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
+      items2 = mapOrder(secondFieldTags, secondFieldTagsOrder, "_id");
     }
   });
 
@@ -70,8 +71,8 @@
     if (
       !users?.tableId ||
       !userRowId ||
-      !userTagsOrderColumn ||
-      !userHighlightedTagsOrderColumn
+      !firstFieldTagsColumn ||
+      !secondFieldTagsColumn
     ) {
       return null;
     }
@@ -104,7 +105,7 @@
 
   function addItem(newTag) {
     items.push(newTag);
-    saveTags([...items, newTag], userTagsOrderColumn);
+    saveTags([...items, newTag], firstFieldTagsColumn);
     items = items;
   }
 
@@ -130,15 +131,15 @@
 </script>
 
 <td colspan="2" use:styleable={$component.styles}>
-  {#if titleForAllTags}
-    <h3 class="title">{titleForAllTags}</h3>
+  {#if firstFieldTitle}
+    <h3 class="title">{firstFieldTitle}</h3>
   {/if}
   <div class="basket-wrappper">
     <SortableList
       ulClass="basket"
       liClass="basket-item"
       {sortableOptions}
-      on:orderChanged={(e) => itemOrderChanged(e, userTagsOrderColumn, 0)}
+      on:orderChanged={(e) => itemOrderChanged(e, firstFieldTagsColumn, 0)}
       bind:items
       idKey="_id"
       let:item
@@ -151,38 +152,39 @@
         {fetchTagRow}
         {userRowId}
         {allTags}
-        column={userTagsOrderColumn}
+        column={firstFieldTagsColumn}
       />
     </SortableList>
     <NewTagInput {allTags} {addItem} {userRowId} />
   </div>
 
-  {#if titleForHighlightedTags}
-    <h3 class="title">{titleForHighlightedTags}</h3>
-  {/if}
-  <div class="basket-wrappper">
-    <SortableList
-      ulClass="basket"
-      liClass="basket-item"
-      {sortableOptions}
-      bind:items={items2}
-      on:orderChanged={(e) =>
-        itemOrderChanged(e, userHighlightedTagsOrderColumn, 500)}
-      idKey="_id"
-      let:item
-      {getItemById}
-    >
-      <Tag
-        {item}
+  {#if secondField}
+    {#if secondFieldTitle}
+      <h3 class="title">{secondFieldTitle}</h3>
+    {/if}
+    <div class="basket-wrappper">
+      <SortableList
+        ulClass="basket"
+        liClass="basket-item"
+        {sortableOptions}
         bind:items={items2}
-        {saveTags}
-        {fetchTagRow}
-        {userRowId}
-        {allTags}
-        column={userHighlightedTagsOrderColumn}
-      />
-    </SortableList>
-  </div>
+        on:orderChanged={(e) => itemOrderChanged(e, secondFieldTagsColumn, 500)}
+        idKey="_id"
+        let:item
+        {getItemById}
+      >
+        <Tag
+          {item}
+          bind:items={items2}
+          {saveTags}
+          {fetchTagRow}
+          {userRowId}
+          {allTags}
+          column={secondFieldTagsColumn}
+        />
+      </SortableList>
+    </div>
+  {/if}
 </td>
 
 <style>
