@@ -1,19 +1,23 @@
 <script>
-  import { onMount, getContext } from "svelte";
+  import { onMount, getContext, getAllContexts, onDestroy } from "svelte";
   import { mapOrder } from "./utils.js";
   import SortableList from "@palsch/svelte-sortablejs";
   import ToDoListItem from "./ToDoListItem.svelte";
   import ToDoInputForm from "./TodoInputForm.svelte";
 
   export let users;
-  export let searchField;
   export let allTags;
   export let allUserTags;
   export let userRowId;
   export let userTagsOrderColumn;
   export let userHighlightedTagsOrderColumn;
+  export let searchTagsProvider;
 
-  const { API, styleable, notificationStore } = getContext("sdk");
+  const { API, getAPIKey, styleable, notificationStore } = getContext("sdk");
+  const allContext = getAllContexts();
+  const formContext = getContext("form");
+  const formStepContext = getContext("form-step");
+
   const component = getContext("component");
 
   let userRow;
@@ -22,6 +26,37 @@
   let items = [];
   let items2 = [];
 
+  //-------------
+  //   let fieldApi;
+  //   let fieldState;
+
+  //   const formApi = formContext?.formApi;
+  //   $: formStep = formStepContext ? $formStepContext || 1 : 1;
+  //   $: formField = formApi?.registerField(
+  //     "search",
+  //     "text",
+  //     "ss",
+  //     false,
+  //     null,
+  //     formStep
+  //   );
+  //   $: unsubscribe = formField?.subscribe((value) => {
+  //     fieldState = value?.fieldState;
+  //     fieldApi = value?.fieldApi;
+  //   });
+
+  //   onDestroy(() => {
+  //     fieldApi?.deregister();
+  //     unsubscribe?.();
+  //   });
+
+  //move to form
+  //   $: {
+  //     console.log(`searchTagsProvider was changed to`, searchTagsProvider.value);
+  //   }
+
+  //----------------
+
   const sortableOptions = {
     group: "items",
     animation: 300,
@@ -29,7 +64,13 @@
   };
 
   onMount(async () => {
-    console.log(API);
+    //and this
+    // console.log(searchTagsProvider.value, "provider do");
+
+    // setTimeout(() => {
+    //   fieldApi?.setValue("Html");
+    // }, 10000);
+
     userRow = await fetchUserRow();
     const userTagsParse = JSON.parse(userRow[userTagsOrderColumn]);
     const userHighlightedTagsParse = JSON.parse(
@@ -65,6 +106,33 @@
       items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
     }
   });
+
+  const fetchSearchTags = async () => {
+    let val = await API.post({
+      url: "/api/ta_e85d58e2cc224a1e957fe853a0bf2e3c/search",
+      body: {
+        query: {
+          string: {},
+          fuzzy: { "1:name": "css" },
+          range: {},
+          equal: {},
+          notEqual: {},
+          empty: {},
+          notEmpty: {},
+          contains: {},
+          notContains: {},
+          oneOf: {},
+          containsAny: {},
+        },
+        bookmark: null,
+        limit: 999,
+        sortOrder: "descending",
+        sortType: "string",
+        paginate: false,
+      },
+    });
+    console.log(val, "api____________");
+  };
 
   const fetchAllTags = async () => {
     return await API.fetchTableData(allTags.tableId);
@@ -151,6 +219,7 @@
 </script>
 
 <td colspan="2" use:styleable={$component.styles}>
+  <button on:click={() => fetchSearchTags()}>search</button>
   <h3 class="title">All user tags</h3>
   <div class="basket-wrappper">
     <SortableList
@@ -171,7 +240,13 @@
         on:click={() => removeItem(userTagsOrderColumn, items, item._id)}
       />
     </SortableList>
-    <ToDoInputForm {allTags} {fetchAllTags} {addItem} {userRowId} />
+    <ToDoInputForm
+      {allTags}
+      {fetchAllTags}
+      {searchTagsProvider}
+      {addItem}
+      {userRowId}
+    />
   </div>
 
   <h3 class="title">Highlighted tags</h3>
