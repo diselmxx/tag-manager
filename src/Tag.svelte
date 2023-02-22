@@ -1,11 +1,16 @@
 <script>
-  import { tagsColors, mapOrder } from "./utils.js";
-  //   import { allUserItems, activeItems, allUserItemsIds } from "./store.js";
+  import { tagsColors } from "./utils.js";
+  import { getContext } from "svelte";
 
   export let item;
   export let items;
   export let saveTags;
+  export let fetchTagRow;
+  export let allTags;
+  export let userRowId;
   export let column;
+
+  const { API } = getContext("sdk");
 
   let editable = false;
   let newColor = "#c2f5e9";
@@ -29,6 +34,21 @@
     saveTags(items, column);
     hideInput();
   }
+
+  const removeItem = async (column, id) => {
+    const tagRow = await fetchTagRow(id);
+    const tagFriends =
+      tagRow.friends.filter((item) => item._id !== userRowId) || [];
+
+    await API.saveRow({
+      ...{ ...tagRow, friends: tagFriends },
+      ...allTags,
+    });
+
+    const newItems = items.filter((item) => item._id !== id);
+    saveTags(newItems, column);
+    items = newItems;
+  };
 </script>
 
 <div
@@ -37,7 +57,9 @@
   on:dblclick={() => showInput()}
 >
   {item.name}
-  <button class="remove-tag-button" on:click
+  <button
+    class="remove-tag-button"
+    on:click={() => removeItem(column, item._id)}
     ><svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 30 30"

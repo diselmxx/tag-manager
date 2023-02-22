@@ -2,28 +2,25 @@
   import { onMount, getContext, getAllContexts, onDestroy } from "svelte";
   import { mapOrder } from "./utils.js";
   import SortableList from "@palsch/svelte-sortablejs";
-  import ToDoListItem from "./ToDoListItem.svelte";
-  import ToDoInputForm from "./TodoInputForm.svelte";
+  import Tag from "./Tag.svelte";
+  import NewTagInput from "./NewTagInput.svelte";
 
   export let users;
   export let allTags;
   export let allUserTags;
   export let userRowId;
-  export let userTagsOrderColumn;
-  export let userHighlightedTagsOrderColumn;
-  export let searchTagsProvider;
-
-  const { API, getAPIKey, styleable, notificationStore } = getContext("sdk");
-  const allContext = getAllContexts();
-  const formContext = getContext("form");
-  const formStepContext = getContext("form-step");
+  export let firstFieldTagsColumn;
+  export let firstFieldTitle;
+  export let secondField;
+  export let secondFieldTitle;
+  export let secondFieldTagsColumn;
 
   const component = getContext("component");
 
   let userRow;
-  let allTagsOrder = [];
-  let highlightedTagsOrder = [];
+  let firstFieldTagsOrder = [];
   let items = [];
+  let secondFieldTagsOrder = [];
   let items2 = [];
 
   //-------------
@@ -72,38 +69,38 @@
     // }, 10000);
 
     userRow = await fetchUserRow();
-    const userTagsParse = JSON.parse(userRow[userTagsOrderColumn]);
-    const userHighlightedTagsParse = JSON.parse(
-      userRow[userHighlightedTagsOrderColumn]
-    );
+    const firstFieldTagsParse = JSON.parse(userRow[firstFieldTagsColumn]) || [];
+    const secondFieldTagsParse =
+      JSON.parse(userRow[secondFieldTagsColumn]) || [];
 
     const allUserTagsValue = setColors(
       allUserTags.value,
-      userTagsParse,
-      userHighlightedTagsParse
+      firstFieldTagsParse,
+      secondFieldTagsParse
     );
 
-    allTagsOrder =
-      (userTagsParse.length && userTagsParse.map((item) => item && item._id)) ||
+    firstFieldTagsOrder =
+      (firstFieldTagsParse.length &&
+        firstFieldTagsParse.map((item) => item && item._id)) ||
       [];
 
-    highlightedTagsOrder =
-      (userHighlightedTagsParse.length &&
-        userHighlightedTagsParse.map((item) => item && item._id)) ||
+    secondFieldTagsOrder =
+      (secondFieldTagsParse.length &&
+        secondFieldTagsParse.map((item) => item && item._id)) ||
       [];
 
-    if (allTagsOrder.length) {
-      const allTags = allUserTagsValue.filter((item) =>
-        allTagsOrder.includes(item._id)
+    if (firstFieldTagsOrder.length) {
+      const firstFieldTags = allUserTagsValue.filter((item) =>
+        firstFieldTagsOrder.includes(item._id)
       );
-      items = mapOrder(allTags, allTagsOrder, "_id");
+      items = mapOrder(firstFieldTags, firstFieldTagsOrder, "_id");
     }
 
-    if (highlightedTagsOrder.length) {
-      const highlightedTags = allUserTagsValue.filter((item) =>
-        highlightedTagsOrder.includes(item._id)
+    if (secondFieldTagsOrder.length) {
+      const secondFieldTags = allUserTagsValue.filter((item) =>
+        secondFieldTagsOrder.includes(item._id)
       );
-      items2 = mapOrder(highlightedTags, highlightedTagsOrder, "_id");
+      items2 = mapOrder(secondFieldTags, secondFieldTagsOrder, "_id");
     }
   });
 
@@ -142,8 +139,8 @@
     if (
       !users?.tableId ||
       !userRowId ||
-      !userTagsOrderColumn ||
-      !userHighlightedTagsOrderColumn
+      !firstFieldTagsColumn ||
+      !secondFieldTagsColumn
     ) {
       return null;
     }
@@ -163,6 +160,8 @@
     });
     try {
       const userRow = await fetchUserRow();
+      notificationStore.actions.success("Saved...");
+      notificationStore.actions.blockNotifications(2000);
       return await API.saveRow({
         ...{ ...userRow, [column]: JSON.stringify(tagsMinify) },
         ...users,
@@ -174,9 +173,8 @@
 
   function addItem(newTag) {
     items.push(newTag);
-    saveTags([...items, newTag], userTagsOrderColumn);
+    saveTags([...items, newTag], firstFieldTagsColumn);
     items = items;
-    console.log("New tag created ans saved", newTag);
   }
 
   function setColors(allValues, list1, list2) {
@@ -189,27 +187,9 @@
     });
   }
 
-  const removeItem = async (column, list, id) => {
-    const tagRow = await fetchTagRow(id);
-    console.log(tagRow);
-    const tagFriends =
-      tagRow.friends.filter((item) => item._id !== userRowId) || [];
-
-    await API.saveRow({
-      ...{ ...tagRow, friends: tagFriends },
-      ...allTags,
-    });
-    const newItems = list.filter((item) => item._id !== id);
-    saveTags(newItems, column);
-    items = items.filter((item) => item._id !== id);
-    items2 = items2.filter((item) => item._id !== id);
-  };
-
   function itemOrderChanged(event, column, timeout) {
-    console.log(`item order changed in ${column}`, event.detail);
     setTimeout(() => {
       saveTags(event.detail, column);
-      console.log(`save ${column}`);
     }, timeout);
   }
 
@@ -219,59 +199,61 @@
 </script>
 
 <td colspan="2" use:styleable={$component.styles}>
-  <button on:click={() => fetchSearchTags()}>search</button>
-  <h3 class="title">All user tags</h3>
+  {#if firstFieldTitle}
+    <h3 class="title">{firstFieldTitle}</h3>
+    <button on:click={() => fetchSearchTags()}>search</button>
+  {/if}
   <div class="basket-wrappper">
     <SortableList
       ulClass="basket"
       liClass="basket-item"
       {sortableOptions}
-      on:orderChanged={(e) => itemOrderChanged(e, userTagsOrderColumn, 0)}
+      on:orderChanged={(e) => itemOrderChanged(e, firstFieldTagsColumn, 0)}
       bind:items
       idKey="_id"
       let:item
       {getItemById}
     >
-      <ToDoListItem
+      <Tag
         {item}
         bind:items
         {saveTags}
-        column={userTagsOrderColumn}
-        on:click={() => removeItem(userTagsOrderColumn, items, item._id)}
+        {fetchTagRow}
+        {userRowId}
+        {allTags}
+        column={firstFieldTagsColumn}
       />
     </SortableList>
-    <ToDoInputForm
-      {allTags}
-      {fetchAllTags}
-      {searchTagsProvider}
-      {addItem}
-      {userRowId}
-    />
+    <NewTagInput {allTags} {addItem} {userRowId} />
   </div>
 
-  <h3 class="title">Highlighted tags</h3>
-  <div class="basket-wrappper">
-    <SortableList
-      ulClass="basket"
-      liClass="basket-item"
-      {sortableOptions}
-      bind:items={items2}
-      on:orderChanged={(e) =>
-        itemOrderChanged(e, userHighlightedTagsOrderColumn, 500)}
-      idKey="_id"
-      let:item
-      {getItemById}
-    >
-      <ToDoListItem
-        {item}
+  {#if secondField}
+    {#if secondFieldTitle}
+      <h3 class="title">{secondFieldTitle}</h3>
+    {/if}
+    <div class="basket-wrappper">
+      <SortableList
+        ulClass="basket"
+        liClass="basket-item"
+        {sortableOptions}
         bind:items={items2}
-        {saveTags}
-        column={userHighlightedTagsOrderColumn}
-        on:click={() =>
-          removeItem(userHighlightedTagsOrderColumn, items2, item._id)}
-      />
-    </SortableList>
-  </div>
+        on:orderChanged={(e) => itemOrderChanged(e, secondFieldTagsColumn, 500)}
+        idKey="_id"
+        let:item
+        {getItemById}
+      >
+        <Tag
+          {item}
+          bind:items={items2}
+          {saveTags}
+          {fetchTagRow}
+          {userRowId}
+          {allTags}
+          column={secondFieldTagsColumn}
+        />
+      </SortableList>
+    </div>
+  {/if}
 </td>
 
 <style>

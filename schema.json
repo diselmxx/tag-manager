@@ -19,13 +19,8 @@
       },
       {
         "type": "field",
-        "label": "User Tags Order Column",
-        "key": "userTagsOrderColumn"
-      },
-      {
-        "type": "field",
-        "label": "User Highlighted Tags Order Column",
-        "key": "userHighlightedTagsOrderColumn"
+        "label": "First Field Tags Column",
+        "key": "firstFieldTagsColumn"
       },
       {
         "type": "table",
@@ -41,6 +36,32 @@
         "type": "text",
         "label": "User Row Id",
         "key": "userRowId"
+      },
+      {
+        "type": "text",
+        "label": "Title for first field",
+        "key": "firstFieldTitle"
+      },
+      {
+        "type": "boolean",
+        "label": "Second field",
+        "key": "secondField"
+      },
+      {
+        "type": "field",
+        "label": "Second Field Tags Column",
+        "key": "secondFieldTagsColumn",
+        "dependsOn": {
+          "setting": "secondField"
+        }
+      },
+      {
+        "type": "text",
+        "label": "Title for second field",
+        "key": "secondFieldTitle",
+        "dependsOn": {
+          "setting": "secondField"
+        }
       }
     ]
   }
