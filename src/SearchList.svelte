@@ -4,7 +4,7 @@
 
   export let items;
   export let isVisible;
-  export let setValue;
+  export let addToList;
 </script>
 
 {#if isVisible && items.length}
@@ -13,7 +13,7 @@
     transition:slide={{ delay: 250, duration: 300, easing: quintOut }}
   >
     {#each items as item}
-      <li on:click={() => setValue(item.name)}>{item.name}</li>
+      <li on:click={() => addToList(item)}>{item.name}</li>
     {/each}
   </ul>
 {/if}

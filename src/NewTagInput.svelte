@@ -5,7 +5,7 @@
   export let allTags;
   export let addItem;
   export let userRowId;
-  export let fetchAllTags;
+  //   export let fetchSearchTags;
 
   const { API, notificationStore } = getContext("sdk");
 
@@ -13,22 +13,56 @@
   let newColor = "#c2f5e9";
   let newItemInputForm = null;
   let inputOpen = false;
-  let fetchedAllTags = [];
+  let searchItems = [];
 
-  $: searchItems = fetchedAllTags.filter((tag) => tag.name.includes(newItem));
+  $: search = fetchSearchTags(newItem);
+  $: tagNotExist = !Boolean(
+    searchItems.filter(
+      (tag) => tag.name.toLowerCase() === newItem.toLowerCase()
+    ).length
+  );
 
-  onMount(async () => {
-    fetchedAllTags = await fetchAllTags();
-    console.log(fetchedAllTags);
-  });
+  // fetchedAllTags.filter((tag) => tag.name.includes(newItem));
+  onMount(async () => {});
 
-  async function createTag() {
+  const fetchSearchTags = async (tag) => {
+    if (!tag) {
+      return [];
+    }
+
+    const response = await API.post({
+      url: "/api/ta_e85d58e2cc224a1e957fe853a0bf2e3c/search",
+      body: {
+        query: {
+          string: {},
+          fuzzy: { "1:name": tag },
+          range: {},
+          equal: {},
+          notEqual: {},
+          empty: {},
+          notEmpty: {},
+          contains: {},
+          notContains: {},
+          oneOf: {},
+          containsAny: {},
+        },
+        bookmark: null,
+        limit: 999,
+        sortOrder: "descending",
+        sortType: "string",
+        paginate: false,
+      },
+    });
+    searchItems = response.rows;
+  };
+
+  async function createTag(tag) {
     try {
       return await API.saveRow({
         ...allTags,
         ...{
           //(name,color,friends now are hardcoded(columns name))
-          name: newItem,
+          name: tag.name || newItem,
           color: newColor,
           friends: [{ _id: userRowId }],
         },
@@ -38,9 +72,9 @@
     }
   }
 
-  async function addToList() {
+  async function addToList(tag) {
     if (newItem) {
-      const newTag = await createTag();
+      const newTag = await createTag(tag);
       addItem(newTag);
       newItem = "";
       hideInput();
@@ -53,10 +87,6 @@
 
   function hideInput() {
     inputOpen = false;
-  }
-
-  function setValue(value) {
-    newItem = value;
   }
 </script>
 
@@ -93,16 +123,15 @@
           bind:this={newItemInputForm}
           on:blur={() => newItem || hideInput()}
           on:keydown={(e) => {
-            e.key === "Enter" ? addToList() : "";
             e.key === "Escape" ? hideInput() : "";
           }}
           type="text"
           placeholder="Add a new tag"
           class="tags-input"
         />
-        <SearchList bind:items={searchItems} {setValue} isVisible={newItem} />
+        <SearchList bind:items={searchItems} {addToList} isVisible={newItem} />
       </div>
-      {#if newItem}
+      {#if newItem && tagNotExist}
         <button class="add-tag-button2" on:click={addToList}>Add</button>
       {/if}
     </div>
