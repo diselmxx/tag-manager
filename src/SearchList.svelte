@@ -13,7 +13,9 @@
     transition:slide={{ delay: 250, duration: 300, easing: quintOut }}
   >
     {#each items as item}
-      <li on:click={() => addToList(item)}>{item.name}</li>
+      <li on:click={() => addToList(item)}>
+        {item.name}
+      </li>
     {/each}
   </ul>
 {/if}
@@ -38,8 +40,11 @@
     padding: 2px 5px;
     transition: 0.3s;
   }
-  .search-list li:hover {
+  .search-list li:hover,
+  .search-list li:focus {
     background: #c2f5e9;
+    border: none;
+    outline: none;
   }
   .search-list.visible {
     visibility: visible;

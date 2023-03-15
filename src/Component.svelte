@@ -66,37 +66,6 @@
     }
   });
 
-  //   const fetchSearchTags = async (tag) => {
-  //     if (!tag) {
-  //       return [];
-  //     }
-
-  //     const response = await API.post({
-  //       url: "/api/ta_e85d58e2cc224a1e957fe853a0bf2e3c/search",
-  //       body: {
-  //         query: {
-  //           string: {},
-  //           fuzzy: { "1:name": tag },
-  //           range: {},
-  //           equal: {},
-  //           notEqual: {},
-  //           empty: {},
-  //           notEmpty: {},
-  //           contains: {},
-  //           notContains: {},
-  //           oneOf: {},
-  //           containsAny: {},
-  //         },
-  //         bookmark: null,
-  //         limit: 999,
-  //         sortOrder: "descending",
-  //         sortType: "string",
-  //         paginate: false,
-  //       },
-  //     });
-  //     return response;
-  //   };
-
   const fetchUserRow = async () => {
     if (
       !users?.tableId ||

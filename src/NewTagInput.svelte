@@ -16,14 +16,11 @@
   let searchItems = [];
 
   $: search = fetchSearchTags(newItem);
-  $: tagNotExist = !Boolean(
+  $: tagExistGlobal = Boolean(
     searchItems.filter(
       (tag) => tag.name.toLowerCase() === newItem.toLowerCase()
     ).length
   );
-
-  // fetchedAllTags.filter((tag) => tag.name.includes(newItem));
-  onMount(async () => {});
 
   const fetchSearchTags = async (tag) => {
     if (!tag) {
@@ -31,7 +28,7 @@
     }
 
     const response = await API.post({
-      url: "/api/ta_e85d58e2cc224a1e957fe853a0bf2e3c/search",
+      url: `/api/${allTags.tableId}/search`,
       body: {
         query: {
           string: {},
@@ -56,13 +53,13 @@
     searchItems = response.rows;
   };
 
-  async function createTag(tag) {
+  async function createTag() {
     try {
       return await API.saveRow({
         ...allTags,
         ...{
           //(name,color,friends now are hardcoded(columns name))
-          name: tag.name || newItem,
+          name: newItem,
           color: newColor,
           friends: [{ _id: userRowId }],
         },
@@ -72,10 +69,29 @@
     }
   }
 
+  async function updateTag(tag) {
+    try {
+      return await API.saveRow({
+        ...allTags,
+        ...{
+          //(name,color,friends now are hardcoded(columns name))
+          _id: tag._id,
+          name: tag.name,
+          color: newColor,
+          friends: [...tag.friends, { _id: userRowId }],
+        },
+      });
+    } catch (e) {
+      notificationStore.actions.error("Failed to create tags");
+    }
+  }
+
   async function addToList(tag) {
     if (newItem) {
-      const newTag = await createTag(tag);
-      addItem(newTag);
+      const newOrUpdatedTag = tag?._id
+        ? await updateTag(tag)
+        : await createTag();
+      addItem(newOrUpdatedTag);
       newItem = "";
       hideInput();
     } else {
@@ -117,7 +133,7 @@
   {/if}
   {#if inputOpen}
     <div class="tags-input-wrapper">
-      <div style="position:relative;">
+      <div style="position:relative;font-size:0">
         <input
           bind:value={newItem}
           bind:this={newItemInputForm}
@@ -125,13 +141,21 @@
           on:keydown={(e) => {
             e.key === "Escape" ? hideInput() : "";
           }}
+          on:keydown={(e) => {
+            e.key === "Enter" && !tagExistGlobal ? addToList() : "";
+          }}
           type="text"
           placeholder="Add a new tag"
           class="tags-input"
         />
-        <SearchList bind:items={searchItems} {addToList} isVisible={newItem} />
+        <SearchList
+          bind:items={searchItems}
+          {addToList}
+          {tagExistGlobal}
+          isVisible={newItem}
+        />
       </div>
-      {#if newItem && tagNotExist}
+      {#if newItem && !tagExistGlobal}
         <button class="add-tag-button2" on:click={addToList}>Add</button>
       {/if}
     </div>
@@ -146,7 +170,7 @@
   }
   .tags-input {
     width: 250px;
-    height: 25px;
+    height: 24px;
     font-size: 14px;
     padding: 0 4px;
     border: 1px solid #ccc;
@@ -172,7 +196,7 @@
     padding: 0;
     margin: 0;
     outline: none;
-    border: 1px solid transparent;
+    border: none !important;
   }
   .add-tag-button {
     border-radius: 100%;
@@ -183,6 +207,7 @@
   }
   .add-tag-button2 {
     background: #f5f1f1;
+    height: 100%;
     padding: 2px 5px;
     font-size: 14px;
     margin-left: 8px;
