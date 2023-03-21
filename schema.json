@@ -13,6 +13,11 @@
         "key": "users"
       },
       {
+        "type": "dataSource",
+        "label": "Search Field",
+        "key": "searchField"
+      },
+      {
         "type": "field",
         "label": "First Field Tags Column",
         "key": "firstFieldTagsColumn"
@@ -24,7 +29,7 @@
       },
       {
         "type": "dataSource",
-        "label": "All User Tags",
+        "label": "All User Tags (provider rows)",
         "key": "allUserTags"
       },
       {

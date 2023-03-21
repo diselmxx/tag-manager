@@ -1,9 +1,11 @@
 <script>
-  import { getContext } from "svelte";
+  import { onMount, getContext } from "svelte";
+  import SearchList from "./SearchList.svelte";
 
   export let allTags;
   export let addItem;
   export let userRowId;
+  //   export let fetchSearchTags;
 
   const { API, notificationStore } = getContext("sdk");
 
@@ -11,6 +13,45 @@
   let newColor = "#c2f5e9";
   let newItemInputForm = null;
   let inputOpen = false;
+  let searchItems = [];
+
+  $: search = fetchSearchTags(newItem);
+  $: tagExistGlobal = Boolean(
+    searchItems.filter(
+      (tag) => tag.name.toLowerCase() === newItem.toLowerCase()
+    ).length
+  );
+
+  const fetchSearchTags = async (tag) => {
+    if (!tag) {
+      return [];
+    }
+
+    const response = await API.post({
+      url: `/api/${allTags.tableId}/search`,
+      body: {
+        query: {
+          string: {},
+          fuzzy: { "1:name": tag },
+          range: {},
+          equal: {},
+          notEqual: {},
+          empty: {},
+          notEmpty: {},
+          contains: {},
+          notContains: {},
+          oneOf: {},
+          containsAny: {},
+        },
+        bookmark: null,
+        limit: 999,
+        sortOrder: "descending",
+        sortType: "string",
+        paginate: false,
+      },
+    });
+    searchItems = response.rows;
+  };
 
   async function createTag() {
     try {
@@ -27,10 +68,30 @@
       notificationStore.actions.error("Failed to create tags");
     }
   }
-  async function addToList() {
+
+  async function updateTag(tag) {
+    try {
+      return await API.saveRow({
+        ...allTags,
+        ...{
+          //(name,color,friends now are hardcoded(columns name))
+          _id: tag._id,
+          name: tag.name,
+          color: newColor,
+          friends: [...tag.friends, { _id: userRowId }],
+        },
+      });
+    } catch (e) {
+      notificationStore.actions.error("Failed to create tags");
+    }
+  }
+
+  async function addToList(tag) {
     if (newItem) {
-      const newTag = await createTag();
-      addItem(newTag);
+      const newOrUpdatedTag = tag?._id
+        ? await updateTag(tag)
+        : await createTag();
+      addItem(newOrUpdatedTag);
       newItem = "";
       hideInput();
     } else {
@@ -72,19 +133,29 @@
   {/if}
   {#if inputOpen}
     <div class="tags-input-wrapper">
-      <input
-        bind:value={newItem}
-        bind:this={newItemInputForm}
-        on:blur={() => newItem || hideInput()}
-        on:keydown={(e) => {
-          e.key === "Enter" ? addToList() : "";
-          e.key === "Escape" ? hideInput() : "";
-        }}
-        type="text"
-        placeholder="Add a new tag"
-        class="tags-input"
-      />
-      {#if newItem}
+      <div style="position:relative;font-size:0">
+        <input
+          bind:value={newItem}
+          bind:this={newItemInputForm}
+          on:blur={() => newItem || hideInput()}
+          on:keydown={(e) => {
+            e.key === "Escape" ? hideInput() : "";
+          }}
+          on:keydown={(e) => {
+            e.key === "Enter" && !tagExistGlobal ? addToList() : "";
+          }}
+          type="text"
+          placeholder="Add a new tag"
+          class="tags-input"
+        />
+        <SearchList
+          bind:items={searchItems}
+          {addToList}
+          {tagExistGlobal}
+          isVisible={newItem}
+        />
+      </div>
+      {#if newItem && !tagExistGlobal}
         <button class="add-tag-button2" on:click={addToList}>Add</button>
       {/if}
     </div>
@@ -98,8 +169,8 @@
     justify-content: center;
   }
   .tags-input {
-    width: 130px;
-    height: 25px;
+    width: 250px;
+    height: 24px;
     font-size: 14px;
     padding: 0 4px;
     border: 1px solid #ccc;
@@ -125,7 +196,7 @@
     padding: 0;
     margin: 0;
     outline: none;
-    border: 1px solid transparent;
+    border: none !important;
   }
   .add-tag-button {
     border-radius: 100%;
@@ -136,6 +207,7 @@
   }
   .add-tag-button2 {
     background: #f5f1f1;
+    height: 100%;
     padding: 2px 5px;
     font-size: 14px;
     margin-left: 8px;

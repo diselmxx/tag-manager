@@ -15,8 +15,7 @@
   export let secondFieldTitle;
   export let secondFieldTagsColumn;
 
-  const { API, styleable, notificationStore } = getContext("sdk");
-  const component = getContext("component");
+  const { API, notificationStore } = getContext("sdk");
 
   let userRow;
   let firstFieldTagsOrder = [];
@@ -130,7 +129,7 @@
   }
 </script>
 
-<td colspan="2" use:styleable={$component.styles}>
+<td colspan="2">
   {#if firstFieldTitle}
     <h3 class="title">{firstFieldTitle}</h3>
   {/if}
