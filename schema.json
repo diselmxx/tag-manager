@@ -13,11 +13,6 @@
         "key": "users"
       },
       {
-        "type": "dataSource",
-        "label": "Search Field",
-        "key": "searchField"
-      },
-      {
         "type": "field",
         "label": "First Field Tags Column",
         "key": "firstFieldTagsColumn"

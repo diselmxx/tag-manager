@@ -31,9 +31,16 @@
 
   onMount(async () => {
     userRow = await fetchUserRow();
-    const firstFieldTagsParse = JSON.parse(userRow[firstFieldTagsColumn]) || [];
+    checkCorrectJson();
+
+    const firstFieldTagsParse =
+      (userRow[firstFieldTagsColumn] != "" &&
+        JSON.parse(userRow[firstFieldTagsColumn])) ||
+      [];
     const secondFieldTagsParse =
-      JSON.parse(userRow[secondFieldTagsColumn]) || [];
+      (userRow[secondFieldTagsColumn] != "" &&
+        JSON.parse(userRow[secondFieldTagsColumn])) ||
+      [];
 
     const allUserTagsValue = setColors(
       allUserTags.value,
@@ -67,12 +74,8 @@
   });
 
   const fetchUserRow = async () => {
-    if (
-      !users?.tableId ||
-      !userRowId ||
-      !firstFieldTagsColumn ||
-      !secondFieldTagsColumn
-    ) {
+    if (!users?.tableId || !userRowId) {
+      notificationStore.actions.error("Please set users table and user row");
       return null;
     }
     return await API.fetchRow({ rowId: userRowId, tableId: users.tableId });
@@ -83,6 +86,19 @@
       return null;
     }
     return await API.fetchRow({ rowId: id, tableId: allTags.tableId });
+  };
+
+  const checkCorrectJson = async () => {
+    try {
+      const firstJson = userRow[firstFieldTagsColumn];
+      const secondJson = userRow[secondFieldTagsColumn];
+      firstJson != "" && JSON.parse(firstJson);
+      secondField && secondJson != "" && JSON.parse(secondJson);
+    } catch {
+      notificationStore.actions.error(
+        "Please set correct first or second field tags column"
+      );
+    }
   };
 
   const saveTags = async (tags, column) => {
@@ -212,7 +228,7 @@
     display: flex;
     flex-direction: column;
     padding: 20px;
-    border: 1px solid rgb(56, 43, 43);
+    border: 1px solid var(--spectrum-global-color-gray-500);
     border-radius: 20px;
   }
 
