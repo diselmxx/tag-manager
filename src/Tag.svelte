@@ -140,7 +140,9 @@
     padding: 0;
     width: 100%;
     height: 25px;
-    background: transparent;
-    border: none;
+    background: white;
+    border: none !important;
+    outline: none !important;
+    z-index: 10;
   }
 </style>
